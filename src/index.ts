@@ -1,25 +1,20 @@
 import * as dotenv from "dotenv";
-dotenv.config();
-import { ChatGPTAPIBrowser } from "chatgpt";
 import promptsync from "prompt-sync";
+import { ChatGptService } from "./chatgptService";
+import { Prompter } from "./prompter";
+dotenv.config();
 
-async function example() {
-  // use puppeteer to bypass cloudflare (headful because of captchas)
-  const api = new ChatGPTAPIBrowser({
-    email: process.env.OPENAI_EMAIL!,
-    password: process.env.OPENAI_PASSWORD!,
-  });
-
-  await api.initSession();
-
+async function run() {
+  const gpt = new ChatGptService();
+  const prompter = new Prompter(gpt);
+  await prompter.startConvo();
+  await prompter.beginFile("./package.json");
+  await prompter.generateReadme();
   const prompt = promptsync();
-
   while (true) {
-    const gptPrompt = prompt("message to chatgpt: ");
-    const result = await api.sendMessage(gptPrompt);
-    console.log(result.response);
+    const p = prompt("enter message for chatgpt:");
+    const resp = await gpt.sendGptMessage(p);
   }
 }
 
-console.log("starting");
-await example();
+run();
